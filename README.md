@@ -278,6 +278,33 @@ It is possible to render a `Get` component and defer the fetch to a later stage.
 
 The above example will display your UI, and then load unicorns on demand.
 
+### Caching
+
+The Get component implements a simple caching mechanism that can be enabled with the `useCache` prop. On initial load, the `loading` prop will be true, and then the data will be saved to the cache. On subsequent loads, the `loading` prop will not be true and instead, the data will instantly be returned. Use can set the expiry for an item in the cache with `cacheTimeout`, the value is in milliseconds so a value of `cacheTimeout={60000}` is 60 seconds
+
+_The cache will not save data when there is a fetch error._
+
+Here is an example with the cache enabled with a timeout of 30 mins
+
+[![Edit Restful React demos](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/30n66z45mq)
+
+```jsx
+<Get path="/unicorns" useCache cacheTimeout={1800000}>
+  {(unicorns) => (
+      {unicorns && (
+        <ul>
+          {unicorns.map((unicorn, index) => (
+            <li key={index}>{unicorn}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )}
+</Get>
+```
+
+The above example will load instantly after the initial load, and then require refetching every 30 mins
+
 ### Response Resolution
 
 Sometimes, your backend responses arrive in a shape that you might want to adapt, validate, or reshape. Other times, maybe your data consistently arrives in a `{ data: {} }` shape, with `data` containing the stuff you want.
@@ -613,10 +640,11 @@ module.exports = inputSchema => ({
 
 ### Caching
 
-This doesn't exist yet.
-Feel free to contribute a solution here.
+There exists a very simple caching mechanism for the Get component via [js-cache](https://www.npmjs.com/package/js-cache)
 
-An LRU cache would be nice.
+On initial fetch via Get, the data will be cached with the key being the full path, along with any query params
+
+When the refetch function is called on the component, any cache hits will be ignored and the data will be overwritten and stored again, just like the initial load.
 
 ## Contributing
 
