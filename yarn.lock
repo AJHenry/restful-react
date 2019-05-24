@@ -1441,6 +1441,11 @@ babel-preset-jest@^24.6.0:
     "@babel/plugin-syntax-object-rest-spread" "^7.0.0"
     babel-plugin-jest-hoist "^24.6.0"
 
+backbone-events-standalone@*:
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/backbone-events-standalone/-/backbone-events-standalone-0.2.7.tgz#32437d9d11c5cef041034a59c49473b86f0ce196"
+  integrity sha1-MkN9nRHFzvBBA0pZxJRzuG8M4ZY=
+
 backo2@1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/backo2/-/backo2-1.0.2.tgz#31ab1ac8b129363463e35b3ebb69f4dfcfba7947"
@@ -4243,6 +4248,11 @@ indexof@0.0.1:
   resolved "https://registry.yarnpkg.com/indexof/-/indexof-0.0.1.tgz#82dc336d232b9062179d05ab3293a66059fd435d"
   integrity sha1-gtwzbSMrkGIXnQWrMpOmYFn9Q10=
 
+infinite-timeout@*:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/infinite-timeout/-/infinite-timeout-0.1.0.tgz#65da6567c7e017a636f281a0c1fe08421e33dc4c"
+  integrity sha1-ZdplZ8fgF6Y28oGgwf4IQh4z3Ew=
+
 inflight@^1.0.4:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/inflight/-/inflight-1.0.6.tgz#49bd6331d7d02d0c09bc910a1075ba8165b56df9"
@@ -5471,6 +5481,14 @@ jest@^24.8.0:
   dependencies:
     import-local "^2.0.0"
     jest-cli "^24.8.0"
+
+js-cache@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/js-cache/-/js-cache-1.0.3.tgz#28fdd75069c73395dbcbab63ce8d090df9505f43"
+  integrity sha512-1vJ8wLHuuzxbzJZxRBs51HAhlCIuO/bNROmjroBHUhoxBbhwnqBCHe2TEw2KPdW/n8qPu4+h9HZHcNZEod7jxw==
+  dependencies:
+    backbone-events-standalone "*"
+    infinite-timeout "*"
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
