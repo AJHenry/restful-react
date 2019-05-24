@@ -5,6 +5,7 @@ import * as qs from "qs";
 import * as React from "react";
 
 import RestfulReactProvider, { InjectedProps, RestfulReactConsumer, RestfulReactProviderProps } from "./Context";
+import { getCache, setCache } from "./util/cache";
 import { composePath, composeUrl } from "./util/composeUrl";
 import { processResponse } from "./util/processResponse";
 import { resolveData } from "./util/resolveData";
@@ -123,6 +124,26 @@ export interface GetProps<TData, TError, TQueryParams> {
       }
     | boolean
     | number;
+
+  /**
+   * Used for determining whether we would like to use the cache
+   */
+  useCache?: boolean;
+
+  /**
+   * Used for determining the cache mode
+   * "ONLY" - Only use cache data, do not fetch if there is a hit
+   * "MIXED" - If there is a hit, refetch anyway and replace the result
+   * "MERGED" - If there is a hit, refetch anyway and merge the result
+   * "NONE" - Like not even using a cache
+   */
+  cacheMode?: string;
+
+  /**
+   * Time in seconds it takes for something to expire from the cache
+   * 0 for never
+   */
+  cacheTimeout?: number;
 }
 
 /**
@@ -232,8 +253,8 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
     };
   };
 
-  public fetch = async (requestPath?: string, thisRequestOptions?: RequestInit) => {
-    const { base, __internal_hasExplicitBase, parentPath, path, resolve } = this.props;
+  public fetch = async (requestPath?: string, thisRequestOptions?: RequestInit, ignoreCache?: boolean) => {
+    const { base, __internal_hasExplicitBase, parentPath, path, resolve, useCache, cacheTimeout } = this.props;
     if (this.state.error || !this.state.loading) {
       this.setState(() => ({ error: null, loading: true }));
     }
@@ -250,6 +271,37 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       }
       return url;
     };
+
+    // Create a cache key for easier lookup
+    const cacheKey = {
+      path: makeRequestPath(),
+      options: this.getRequestOptions(thisRequestOptions),
+    };
+
+    // console.log(`Cache key`);
+    // console.log(cacheKey);
+
+    // See if we need to check the cache
+    if (useCache && !ignoreCache) {
+      // console.log(`Checking the cache`);
+      // Grab our result
+      const data = getCache(cacheKey);
+
+      // If we have a hit, return our result
+      if (data) {
+        // console.log(`Found a hit for the given cache key`);
+        const resolved = await resolveData<TData, TError>({ data, resolve });
+
+        // console.log(resolved);
+
+        this.setState({ loading: false, data: resolved.data, error: resolved.error });
+        return resolved.data;
+      } else {
+        // console.log(`No hit found for the given cache key`);
+      }
+    } else {
+      // console.log(`Did not check the cache`);
+    }
 
     const request = new Request(makeRequestPath(), this.getRequestOptions(thisRequestOptions));
     try {
@@ -281,6 +333,14 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       }
 
       const resolved = await resolveData<TData, TError>({ data, resolve });
+      // console.log(resolved);
+      if (!resolved.error && useCache) {
+        // console.log(`No error fetching result, saving to cache`);
+        // console.log(resolved.data);
+        setCache(cacheKey, resolved.data, cacheTimeout);
+      } else {
+        // console.log(`Error fetching result, cannot add to cache`);
+      }
 
       this.setState({ loading: false, data: resolved.data, error: resolved.error });
       return data;
@@ -306,7 +366,11 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
     return children(
       data,
       { loading, error },
-      { refetch: this.fetch },
+      {
+        refetch: (): Promise<any> => {
+          return this.fetch(undefined, undefined, true);
+        },
+      },
       { response, absolutePath: composeUrl(base!, parentPath!, path) },
     );
   }
