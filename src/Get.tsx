@@ -198,7 +198,7 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
     parentPath: "",
     resolve: (unresolvedData: any) => unresolvedData,
     useCache: false,
-    cacheMode: "NONE",
+    cacheMode: "ONLY",
     cacheTimeout: 0,
   };
 
