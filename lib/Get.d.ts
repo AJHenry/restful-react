@@ -122,14 +122,15 @@ export interface GetProps<TData, TError, TQueryParams> {
   useCache?: boolean;
   /**
    * Used for determining the cache mode
+   *
    * "ONLY" - Only use cache data, do not fetch if there is a hit
-   * "MIXED" - If there is a hit, refetch anyway and replace the result
-   * "MERGED" - If there is a hit, refetch anyway and merge the result
-   * "NONE" - Like not even using a cache
+   *
+   * "REPLACE" - If there is a hit, return the hit, then refetch anyway and replace the result
    */
   cacheMode?: string;
   /**
    * Time in seconds it takes for something to expire from the cache
+   *
    * 0 for never
    */
   cacheTimeout?: number;
