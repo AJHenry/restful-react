@@ -2,6 +2,7 @@ import * as qs from "qs";
 import * as React from "react";
 import RestfulReactProvider, { InjectedProps, RestfulReactConsumer, RestfulReactProviderProps } from "./Context";
 import { GetState } from "./Get";
+import { setCache } from "./util/cache";
 import { composePath, composeUrl } from "./util/composeUrl";
 import { processResponse } from "./util/processResponse";
 
@@ -14,6 +15,15 @@ export interface States<TData, TError> {
   loading: boolean;
   /** Do we have an error in the view? */
   error?: GetState<TData, TError>["error"];
+}
+
+/**
+ * A function that is used to optimistically replace the cache until
+ * the data is replaced by <Get />
+ */
+export interface Optimistic {
+  /** Function that takes the data that is to be replaced */
+  optimistic(data: any, cacheKey?: string): void;
 }
 
 export type MutateMethod<TData, TRequestBody> = (
@@ -70,12 +80,25 @@ export interface MutateProps<TData, TError, TQueryParams, TRequestBody> {
    */
   localErrorOnly?: boolean;
   /**
+   * Cache key used for linking the optimistic function to a cache item
+   */
+  cacheKey?: string;
+  /**
+   * Time in milliseconds for an item to expire from the cache
+   */
+  cacheTimeout?: number;
+  /**
    * A function that recieves a mutation function, along with
    * some metadata.
    *
    * @param actions - a key/value map of HTTP verbs, aliasing destroy to DELETE.
    */
-  children: (mutate: MutateMethod<TData, TRequestBody>, states: States<TData, TError>, meta: Meta) => React.ReactNode;
+  children: (
+    mutate: MutateMethod<TData, TRequestBody>,
+    states: States<TData, TError>,
+    meta: Meta,
+    optimistic: Optimistic,
+  ) => React.ReactNode;
 }
 
 /**
@@ -193,10 +216,21 @@ class ContextlessMutate<TData, TError, TQueryParams, TRequestBody> extends React
   };
 
   public render() {
-    const { children, path, base, parentPath } = this.props;
+    const { children, path, base, parentPath, cacheKey, cacheTimeout } = this.props;
     const { error, loading } = this.state;
 
-    return children(this.mutate, { loading, error }, { absolutePath: composeUrl(base!, parentPath!, path!) });
+    return children(
+      this.mutate,
+      { loading, error },
+      { absolutePath: composeUrl(base!, parentPath!, path!) },
+      {
+        optimistic: (data: any, key?: string, timeout?: number) => {
+          const setTimeout = timeout || cacheTimeout;
+          const setKey = key || cacheKey;
+          setCache(setKey, data, setTimeout);
+        },
+      },
+    );
   }
 }
 

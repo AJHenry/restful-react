@@ -7,33 +7,37 @@ As an abstraction, this tool allows for greater consistency and maintainability 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Overview](#overview)
-- [Getting Started](#getting-started)
-- [Features](#features)
-  - [Global Configuration](#global-configuration)
-    - [`RestfulProvider` API](#restfulprovider-api)
-  - [Composability](#composability)
-    - [Full `Get` Component API](#full-get-component-api)
-  - [Loading and Error States](#loading-and-error-states)
-  - [Lazy Fetching](#lazy-fetching)
-  - [Response Resolution](#response-resolution)
-  - [Debouncing Requests](#debouncing-requests)
-  - [TypeScript Integration](#typescript-integration)
-  - [Query Parameters](#query-parameters)
-  - [Mutations with `Mutate`](#mutations-with-mutate)
-    - [Full `Mutate` Component API](#full-mutate-component-api)
-  - [Polling with `Poll`](#polling-with-poll)
-    - [Long Polling](#long-polling)
-    - [Full `Poll` Component API](#full-poll-component-api)
-  - [Code Generation](#code-generation)
-    - [Usage](#usage)
-    - [Import from GitHub](#import-from-github)
-    - [Transforming an Original Spec](#transforming-an-original-spec)
-  - [Caching](#caching)
-- [Contributing](#contributing)
-  - [Code](#code)
-  - [Dogfooding](#dogfooding)
-- [Next Steps](#next-steps)
+- [RESTful React](#restful-react)
+  - [Overview](#overview)
+  - [Getting Started](#getting-started)
+  - [Features](#features)
+    - [Global Configuration](#global-configuration)
+      - [`RestfulProvider` API](#restfulprovider-api)
+    - [Composability](#composability)
+      - [Full `Get` Component API](#full-get-component-api)
+    - [Loading and Error States](#loading-and-error-states)
+    - [Lazy Fetching](#lazy-fetching)
+    - [Get-Cache](#get-cache)
+    - [Response Resolution](#response-resolution)
+    - [Debouncing Requests](#debouncing-requests)
+    - [TypeScript Integration](#typescript-integration)
+    - [Query Parameters](#query-parameters)
+    - [Mutations with `Mutate`](#mutations-with-mutate)
+    - [Optimistic caching with `Mutate`](#optimistic-caching-with-mutate)
+      - [Full `Mutate` Component API](#full-mutate-component-api)
+    - [Polling with `Poll`](#polling-with-poll)
+      - [Long Polling](#long-polling)
+      - [Full `Poll` Component API](#full-poll-component-api)
+    - [Code Generation](#code-generation)
+      - [Usage](#usage)
+      - [Validation of the specification](#validation-of-the-specification)
+      - [Import from GitHub](#import-from-github)
+      - [Transforming an Original Spec](#transforming-an-original-spec)
+    - [Caching](#caching)
+  - [Contributing](#contributing)
+    - [Code](#code)
+    - [Dogfooding](#dogfooding)
+  - [Next Steps](#next-steps)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -278,15 +282,13 @@ It is possible to render a `Get` component and defer the fetch to a later stage.
 
 The above example will display your UI, and then load unicorns on demand.
 
-### Caching
+### Get-Cache
 
 The Get component implements a simple caching mechanism that can be enabled with the `useCache` prop. On initial load, the `loading` prop will be true, and then the data will be saved to the cache. On subsequent loads, the `loading` prop will not be true and instead, the data will instantly be returned. Use can set the expiry for an item in the cache with `cacheTimeout`, the value is in milliseconds so a value of `cacheTimeout={60000}` is 60 seconds
 
 _The cache will not save data when there is a fetch error._
 
 Here is an example with the cache enabled with a timeout of 30 mins
-
-[![Edit Restful React demos](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/30n66z45mq)
 
 ```jsx
 <Get path="/unicorns" useCache cacheTimeout={1800000}>
@@ -442,6 +444,57 @@ const Movies = ({ dispatch }) => (
 
 Each mutation returns a promise, that can then be used to update local component state, or dispatch an action, or do something else depending on your use case.
 
+### Optimistic caching with `Mutate`
+
+Most often, when you make a change to a resource, you already know the data you will receive back. We can use this to our advantage by updating the cache before we even get a response.
+
+The 4th child of `Mutate` provides a function for replacing the cache optimistically.
+
+There are 2 ways to determine what to replace in the cache, either by the `cacheKey` prop or by directly specifying the `key` parameter in the `optimistic` function
+
+`optimistic(data: any, key?: string, timeout?: number)`
+
+```jsx
+const Movies = () => (
+  <ul>
+    <Get path="/movies">
+      {(movies, states, actions) =>
+        movies.map(movie => (
+          <li>
+            {movie.name}
+            <Mutate verb="PUT" cacheKey="movie-42">
+              {(updateMovie, { loading: isUpdating }, _, { optimistic }) => (
+                <button
+                  onClick={() => {
+                    updateMovie({
+                      oldName: movie.name,
+                      newName: "Star Wars: A New Hope",
+                    });
+                    // Uses the cacheKey prop
+                    optimistic({ name: "Star Wars: A New Hope" });
+                    // Overrides the cacheKey prop
+                    optimistic({ name: "Star Wars: A New Hope" }, "movie-45");
+                  }}
+                  loading={isUpdating}
+                >
+                  Update!
+                </button>
+              )}
+            </Mutate>
+          </li>
+        ))
+      }
+    </Get>
+  </ul>
+);
+```
+
+`Mutate` is strongly typed, and provides intelligent autocompletion out of the box, complete with available verbs and other self-documentation.
+
+![Mutate](assets/mutate.png)
+
+Each mutation returns a promise, that can then be used to update local component state, or dispatch an action, or do something else depending on your use case.
+
 #### [Full `Mutate` Component API](src/Mutate.tsx#L31-L47)
 
 ### Polling with `Poll`
@@ -577,7 +630,7 @@ Adding the `--github` flag to `restful-react import` instead of a `--file` allow
 To generate components from remote specifications, you'll need to follow the following steps:
 
 1.  Visit [your GitHub settings](https://github.com/settings/tokens).
-1.  Click **Generate New Token** and choose the following:
+2.  Click **Generate New Token** and choose the following:
 
         Token Description: (enter anything, usually your computer name)
         Scopes:
@@ -587,16 +640,16 @@ To generate components from remote specifications, you'll need to follow the fol
                 [X] public_repo
                 [X] repo:invite
 
-1.  Click **Generate token**.
-1.  Copy the generated string.
-1.  Open Terminal and run `restful-react import --github username:repo:branch:path/to/openapi.yaml --output MY_FETCHERS.tsx`.
-1.  You will be prompted for a token.
-1.  Paste your token.
-1.  You will be asked if you'd like to save it for later. This is _entirely_ up to you and completely safe: it is saved in your `node_modules` folder and _not_ committed to version control or sent to us or anything: the source code of this whole thing is public so you're safe.
+3.  Click **Generate token**.
+4.  Copy the generated string.
+5.  Open Terminal and run `restful-react import --github username:repo:branch:path/to/openapi.yaml --output MY_FETCHERS.tsx`.
+6.  You will be prompted for a token.
+7.  Paste your token.
+8.  You will be asked if you'd like to save it for later. This is _entirely_ up to you and completely safe: it is saved in your `node_modules` folder and _not_ committed to version control or sent to us or anything: the source code of this whole thing is public so you're safe.
 
     **Caveat:** _Since_ your token is stored in `node_modules`, your token will be removed on each `npm install` of `restful-react`.
 
-1.  You're done! 🎉
+9.  You're done! 🎉
 
 #### Transforming an Original Spec
 
