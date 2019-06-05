@@ -304,8 +304,10 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
         options: this.getRequestOptions(thisRequestOptions),
       });
 
+    // console.log(`CacheKey: ${internalCacheKey}`);
+
     // See if we need to check the cache
-    if (useCache && !ignoreCache) {
+    if (useCache && (!ignoreCache || cacheMode === "REPLACE")) {
       // console.log(`Checking the cache`);
       // Grab our result
       const data = getCache(internalCacheKey);
@@ -321,6 +323,7 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
 
         // If the cache mode is only, don't bother fetching
         if (cacheMode === "ONLY") {
+          // console.log(`Cache mode is only, returning`);
           return data;
         }
       } else {
@@ -364,9 +367,7 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       if (!resolved.error && useCache) {
         // console.log(`No error fetching result, saving to cache`);
         // console.log(resolved.data);
-        if (cacheMode === "REPLACE") {
-          setCache(internalCacheKey, resolved.data, cacheTimeout);
-        }
+        setCache(internalCacheKey, resolved.data, cacheTimeout);
       } else {
         // console.log(`Error fetching result, cannot add to cache`);
       }

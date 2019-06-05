@@ -4,12 +4,15 @@ const setCache = (key: string | undefined, value: any | null, timeout: number | 
   // console.log(`Cache: Setting the cache`);
   // cache
   if (!key) {
+    // console.log(`Key not defined, returning`);
     return;
   }
 
   if (!timeout || timeout === 0) {
+    // console.log(`No timeout given, setting cache with no timeout`);
     cache.set(key, value);
   } else {
+    // console.log(`Timeout given, setting cache with timeout: ${timeout}`);
     cache.set(key, value, timeout);
   }
   // console.log(`cache value`);
