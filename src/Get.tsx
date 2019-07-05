@@ -316,7 +316,11 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       if (data) {
         // console.log(`Found a hit for the given cache key`);
         const resolved = await resolveData<TData, TError>({ data, resolve });
-
+        // avoid state updates when component has been unmounted
+        if (this.signal.aborted) {
+          // console.log(`Aborted`)
+          return;
+        }
         // console.log(resolved);
 
         this.setState({ loading: false, data: resolved.data, error: resolved.error });
@@ -375,6 +379,10 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       this.setState({ loading: false, data: resolved.data, error: resolved.error });
       return data;
     } catch (e) {
+      // avoid state updates when component has been unmounted
+      if (this.signal.aborted) {
+        return;
+      }
       this.setState({
         loading: false,
         error: {
