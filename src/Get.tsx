@@ -304,37 +304,26 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
         options: this.getRequestOptions(thisRequestOptions),
       });
 
-    // console.log(`CacheKey: ${internalCacheKey}`);
-
     // See if we need to check the cache
     if (useCache && (!ignoreCache || cacheMode === "REPLACE")) {
-      // console.log(`Checking the cache`);
       // Grab our result
       const data = getCache(internalCacheKey);
 
       // If we have a hit, return our result
       if (data) {
-        // console.log(`Found a hit for the given cache key`);
         const resolved = await resolveData<TData, TError>({ data, resolve });
         // avoid state updates when component has been unmounted
         if (this.signal.aborted) {
-          // console.log(`Aborted`)
           return;
         }
-        // console.log(resolved);
 
         this.setState({ loading: false, data: resolved.data, error: resolved.error });
 
         // If the cache mode is only, don't bother fetching
         if (cacheMode === "ONLY") {
-          // console.log(`Cache mode is only, returning`);
           return data;
         }
-      } else {
-        // console.log(`No hit found for the given cache key`);
       }
-    } else {
-      // console.log(`Did not check the cache`);
     }
 
     const request = new Request(makeRequestPath(), this.getRequestOptions(thisRequestOptions));
@@ -367,13 +356,9 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       }
 
       const resolved = await resolveData<TData, TError>({ data, resolve });
-      // console.log(resolved);
+
       if (!resolved.error && useCache) {
-        // console.log(`No error fetching result, saving to cache`);
-        // console.log(resolved.data);
         setCache(internalCacheKey, resolved.data, cacheTimeout);
-      } else {
-        // console.log(`Error fetching result, cannot add to cache`);
       }
 
       this.setState({ loading: false, data: resolved.data, error: resolved.error });
@@ -383,6 +368,7 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
       if (this.signal.aborted) {
         return;
       }
+
       this.setState({
         loading: false,
         error: {
