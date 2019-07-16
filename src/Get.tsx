@@ -154,6 +154,11 @@ export interface GetProps<TData, TError, TQueryParams> {
    * Used for linking an optimistic result in the Mutate component
    */
   cacheKey?: string;
+
+  /**
+   * Used for determining if the component should update
+   */
+  shouldUpdate?: boolean;
 }
 
 /**
@@ -219,14 +224,15 @@ class ContextlessGet<TData, TError, TQueryParams> extends React.Component<
   }
 
   public componentDidUpdate(prevProps: GetProps<TData, TError, TQueryParams>) {
-    const { base, parentPath, path, resolve, queryParams } = prevProps;
+    const { base, parentPath, path, resolve, queryParams, shouldUpdate } = prevProps;
     if (
       base !== this.props.base ||
       parentPath !== this.props.parentPath ||
       path !== this.props.path ||
       !isEqual(queryParams, this.props.queryParams) ||
       // both `resolve` props need to _exist_ first, and then be equivalent.
-      (resolve && this.props.resolve && resolve.toString() !== this.props.resolve.toString())
+      (resolve && this.props.resolve && resolve.toString() !== this.props.resolve.toString()) ||
+      shouldUpdate !== this.props.shouldUpdate
     ) {
       if (!this.props.lazy) {
         this.fetch();

@@ -142,6 +142,10 @@ export interface GetProps<TData, TError, TQueryParams> {
    * Used for linking an optimistic result in the Mutate component
    */
   cacheKey?: string;
+  /**
+   * Used for determining if the component should update
+   */
+  shouldUpdate?: boolean;
 }
 
 /**
